@@ -6,10 +6,12 @@
 # docker run [-d] spellingbee
 # if using -d (detach), then use docker logs to inspec the output
 
-FROM node:18-alpine
+# FROM node:18-alpine
+FROM golang:1.23
 WORKDIR /app
 ADD https://raw.githubusercontent.com/dwyl/english-words/master/words.txt words.txt
 COPY . .
-RUN yarn install --production
-CMD ["time", "./spellingbee", "words.txt", "ajvelin"]
+# Examples of both shell mode and exec mode invocations.
+RUN go build spellingbee.go
+CMD ["./spellingbee", "words.txt", "ajvelin"]
 EXPOSE 3000

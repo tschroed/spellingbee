@@ -56,14 +56,21 @@ func usage() {
 
 type key uint32
 
-func keyOf(s string) string {
+func keyOf(s string) key {
 	debug(s)
 	c := strings.Split(strings.ToLower(s), "")
 	slices.Sort(c)
 	c = slices.Compact(c)
-	k := strings.Join(c, "")
+	var k uint32
+	for _, ch := range c {
+		v, ok := charBits[ch]
+		if !ok {
+			return 0
+		}
+		k |= v
+	}
 	debug(k)
-	return k
+	return key(k)
 }
 
 func readWords(fname string) ([]string, error) {
@@ -84,23 +91,18 @@ func readWords(fname string) ([]string, error) {
 
 // If haystack key contains the needle key, return true.
 // The first letter of haystack is the central letter and must be present.
-func keyContains(haystack, needle string) bool {
-	if !strings.Contains(needle, string(haystack[0])) {
+func keyContains(haystack, needle key) bool {
+	if haystack == 0 || needle == 0 {
 		return false
 	}
-	for _, ch := range strings.Split(needle, "") {
-		if !strings.Contains(haystack, ch) {
-			return false
-		}
-	}
-	return true
+	return (haystack & needle) == needle
 }
 
-func findWords(words []string, k string) []string {
+func findWords(words map[string]key, k key) []string {
 	soln := make([]string, 0)
-	for _, word := range words {
-		if keyContains(k, keyOf(word)) {
-			soln = append(soln, word)
+	for w, wk := range words {
+		if keyContains(k, wk) {
+			soln = append(soln, w)
 		}
 	}
 	return soln
@@ -116,8 +118,12 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	// keys := buildKeys(words)
-	soln := findWords(words, os.Args[2])
+	debug(charBits)
+	wordKeys := make(map[string]key, 0)
+	for _, word := range words {
+		wordKeys[word] = keyOf(word)
+	}
+	soln := findWords(wordKeys, keyOf(os.Args[2]))
 	fmt.Println(soln)
 }
 

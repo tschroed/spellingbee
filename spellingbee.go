@@ -121,8 +121,13 @@ func main() {
 	debug(charBits)
 	wordKeys := make(map[string]key, 0)
 	for _, word := range words {
-		wordKeys[word] = keyOf(word)
+		k := keyOf(word)
+		if k == 0 {
+			continue
+		}
+		wordKeys[word] = k
 	}
+	debug(wordKeys)
 	soln := findWords(wordKeys, keyOf(os.Args[2]))
 	fmt.Println(soln)
 }

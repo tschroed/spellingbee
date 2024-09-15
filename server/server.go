@@ -58,7 +58,12 @@ type server struct {
 
 func (s *server) FindWords(_ context.Context, in *pb.SpellingbeeRequest) (*pb.SpellingbeeReply, error) {
 	soln := spellingbee.FindWords(s.dict, in.Letters)
-	sortFn := func(reta, retb int) func(string, string) int {
+	sortFn := func(reverse bool) func(string, string) int {
+		reta := 1
+		retb := -1
+		if reverse {
+			reta, retb = retb, reta
+		}
 		return func(a, b string) int {
 			la := len(a)
 			lb := len(b)
@@ -71,11 +76,7 @@ func (s *server) FindWords(_ context.Context, in *pb.SpellingbeeRequest) (*pb.Sp
 			return 0
 		}
 	}
-	if in.Reverse {
-		slices.SortFunc(soln, sortFn(-1, 1))
-	} else {
-		slices.SortFunc(soln, sortFn(1, -1))
-	}
+	slices.SortFunc(soln, sortFn(in.Reverse))
 	return &pb.SpellingbeeReply{Words: soln}, nil
 }
 

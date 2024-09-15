@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/tschroed/spellingbee"
+	pb "github.com/tschroed/spellingbee/server/proto"
 )
 
 const (
@@ -68,4 +69,9 @@ func main() {
 	debug(wordKeys)
 	soln := spellingbee.FindWords(wordKeys, spellingbee.KeyOf(args[1]))
 	fmt.Println(soln)
+	// Just to demo the proto.
+	w := &pb.Solution{
+		Words: []string{"Foo", "Bar"},
+	}
+	fmt.Printf("w: %v\n", w)
 }

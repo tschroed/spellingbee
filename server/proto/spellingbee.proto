@@ -1,7 +1,7 @@
 syntax = "proto3";
-option go_package = "zweknu.org/spellingbee";
+option go_package = "github.com/tschroed/spellingbee/server/proto";
 option java_multiple_files = true;
-option java_package = "org.zweknu.spellingbee";
+option java_package = "org.zweknu.spellingbee.server.proto";
 option java_outer_classname = "Spellingbee";
 
 package spellingbee;
@@ -10,10 +10,10 @@ message Key {
   string letters = 1;
 }
 
-message Words {
+message Solution {
   repeated string words = 1;
 }
 
 service Spellingbee {
-  rpc GetWords(Key) returns (Words) {}
+  rpc GetWords(Key) returns (Solution) {}
 }

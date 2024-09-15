@@ -6,14 +6,18 @@ option java_outer_classname = "Spellingbee";
 
 package spellingbee;
 
-message Key {
+// To be better about separating wire format from logical structure, we
+// could have further encapsulation, so that the Request embeds a Key
+// message with the letters and the Reply embeds a Solution message with
+// words, but that seems overkill.
+message SpellingbeeRequest {
   string letters = 1;
 }
 
-message Solution {
+message SpellingbeeReply {
   repeated string words = 1;
 }
 
 service Spellingbee {
-  rpc GetWords(Key) returns (Solution) {}
+  rpc GetWords(SpellingbeeRequest) returns (SpellingbeeReply) {}
 }

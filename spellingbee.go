@@ -49,9 +49,10 @@ func debug(v any) {
 	}
 }
 
-type Key uint32
+type key uint32
+type Dictionary map[string]key
 
-func KeyOf(s string) Key {
+func keyOf(s string) key {
 	debug(s)
 	c := strings.Split(strings.ToLower(s), "")
 	slices.Sort(c)
@@ -65,22 +66,35 @@ func KeyOf(s string) Key {
 		k |= v
 	}
 	debug(k)
-	return Key(k)
+	return key(k)
+}
+
+func BuildDictionary(words []string) Dictionary {
+	wk := make(Dictionary, 0)
+	for _, word := range words {
+		k := keyOf(word)
+		if k == 0 {
+			continue
+		}
+		wk[word] = k
+	}
+	return wk
 }
 
 // If haystack key contains the needle key, return true.
 // The first letter of haystack is the central letter and must be present.
-func keyContains(haystack, needle Key) bool {
+func keyContains(haystack, needle key) bool {
 	if haystack == 0 || needle == 0 {
 		return false
 	}
 	return (haystack & needle) == needle
 }
 
-func FindWords(words map[string]Key, k Key) []string {
+func FindWords(wordsKeys Dictionary, letters string) []string {
+	lk := keyOf(letters)
 	soln := make([]string, 0)
-	for w, wk := range words {
-		if keyContains(k, wk) {
+	for w, wk := range wordsKeys {
+		if w[0] == letters[0] && keyContains(lk, wk) {
 			soln = append(soln, w)
 		}
 	}

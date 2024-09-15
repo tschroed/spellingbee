@@ -52,15 +52,8 @@ func main() {
 		os.Exit(1)
 	}
 	// debug(charBits)
-	wordKeys := make(map[string]spellingbee.Key, 0)
-	for _, word := range words {
-		k := spellingbee.KeyOf(word)
-		if k == 0 {
-			continue
-		}
-		wordKeys[word] = k
-	}
-	debug(wordKeys)
-	soln := spellingbee.FindWords(wordKeys, spellingbee.KeyOf(os.Args[2]))
+	wordsKeys := spellingbee.BuildDictionary(words)
+	debug(wordsKeys)
+	soln := spellingbee.FindWords(wordsKeys, os.Args[2])
 	fmt.Println(soln)
 }

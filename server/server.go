@@ -2,12 +2,19 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"flag"
 	"fmt"
 	"io"
+	"log"
+	"net"
 	"os"
 	"slices"
 	"strings"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
+
 
 	"github.com/tschroed/spellingbee"
 	pb "github.com/tschroed/spellingbee/server/proto"
@@ -21,7 +28,7 @@ var pFlag = flag.Int("p", 3000, "Port to listen on")
 
 func debug(v any) {
 	if DEBUG {
-		fmt.Println(v)
+		log.Println(v)
 	}
 }
 
@@ -42,36 +49,40 @@ func readWords(fname string) ([]string, error) {
 }
 
 func usage() {
-	fmt.Printf("usage: %s [-p <port>] <dictionary>\n", os.Args[0])
+	log.Fatalf("usage: %s [-p <port>] <dictionary>\n", os.Args[0])
+}
+
+type server struct {
+	pb.UnimplementedSpellingbeeServer
+	dict spellingbee.Dictionary
+}
+
+func (s *server) GetWords(_ context.Context, in *pb.SpellingbeeRequest) (*pb.SpellingbeeReply, error) {
+	return &pb.SpellingbeeReply{Words: spellingbee.FindWords(s.dict, in.Letters)}, nil
 }
 
 func main() {
 	flag.Parse()
 	args := flag.Args()
-	if len(args) != 2 {
+	if len(args) != 1 {
 		usage()
-		os.Exit(1)
 	}
 	words, err := readWords(args[0])
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatalf("%v", err)
 	}
-	// debug(charBits)
-	wordKeys := make(map[string]spellingbee.Key, 0)
-	for _, word := range words {
-		k := spellingbee.KeyOf(word)
-		if k == 0 {
-			continue
-		}
-		wordKeys[word] = k
+	d := spellingbee.BuildDictionary(words)
+	debug(d)
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *pFlag))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
 	}
-	debug(wordKeys)
-	soln := spellingbee.FindWords(wordKeys, spellingbee.KeyOf(args[1]))
-	fmt.Println(soln)
-	// Just to demo the proto.
-	w := &pb.Solution{
-		Words: []string{"Foo", "Bar"},
+	s := grpc.NewServer()
+	pb.RegisterSpellingbeeServer(s, &server{dict: d})
+	reflection.Register(s)
+	a := lis.Addr()
+	log.Printf("Server listening at %v", a)
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
 	}
-	fmt.Printf("w: %v\n", w)
 }

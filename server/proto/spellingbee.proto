@@ -12,6 +12,7 @@ package spellingbee;
 // words, but that seems overkill.
 message SpellingbeeRequest {
   string letters = 1;
+  bool reverse = 2;
 }
 
 message SpellingbeeReply {

@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-
 	"github.com/tschroed/spellingbee"
 	pb "github.com/tschroed/spellingbee/server/proto"
 )
@@ -60,17 +59,24 @@ type server struct {
 func (s *server) FindWords(_ context.Context, in *pb.SpellingbeeRequest) (*pb.SpellingbeeReply, error) {
 	soln := spellingbee.FindWords(s.dict, in.Letters)
 	// Sort by longest first.
-	slices.SortFunc(soln, func(a, b string) int {
-		la := len(a)
-		lb := len(b)
-		if la < lb {
-			return 1
+	sortFn := func(reta, retb int) func(string, string) int {
+		return func(a, b string) int {
+			la := len(a)
+			lb := len(b)
+			if la < lb {
+				return reta
+			}
+			if lb < la {
+				return retb
+			}
+			return 0
 		}
-		if lb < la {
-			return -1
-		}
-		return 0
-	})
+	}
+	if in.Reverse {
+		slices.SortFunc(soln, sortFn(-1, 1))
+	} else {
+		slices.SortFunc(soln, sortFn(1, -1))
+	}
 	return &pb.SpellingbeeReply{Words: soln}, nil
 }
 

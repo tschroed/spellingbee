@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -14,6 +15,8 @@ import (
 const (
 	DEBUG = false
 )
+
+var pFlag = flag.Int("p", 3000, "Port to listen on")
 
 func debug(v any) {
 	if DEBUG {
@@ -38,15 +41,17 @@ func readWords(fname string) ([]string, error) {
 }
 
 func usage() {
-	fmt.Printf("usage: %s <dictionary> <letters>\n", os.Args[0])
+	fmt.Printf("usage: %s [-p <port>] <dictionary>\n", os.Args[0])
 }
 
 func main() {
-	if len(os.Args) != 3 {
+	flag.Parse()
+	args := flag.Args()
+	if len(args) != 2 {
 		usage()
 		os.Exit(1)
 	}
-	words, err := readWords(os.Args[1])
+	words, err := readWords(args[0])
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -61,6 +66,6 @@ func main() {
 		wordKeys[word] = k
 	}
 	debug(wordKeys)
-	soln := spellingbee.FindWords(wordKeys, spellingbee.KeyOf(os.Args[2]))
+	soln := spellingbee.FindWords(wordKeys, spellingbee.KeyOf(args[1]))
 	fmt.Println(soln)
 }

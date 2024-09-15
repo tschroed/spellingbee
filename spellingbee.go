@@ -1,5 +1,7 @@
 package spellingbee
 
+// TODO: write some tests!
+
 import (
 	"fmt"
 	"strings"

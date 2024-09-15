@@ -19,5 +19,5 @@ message SpellingbeeReply {
 }
 
 service Spellingbee {
-  rpc GetWords(SpellingbeeRequest) returns (SpellingbeeReply) {}
+  rpc FindWords(SpellingbeeRequest) returns (SpellingbeeReply) {}
 }

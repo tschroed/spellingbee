@@ -57,8 +57,21 @@ type server struct {
 	dict spellingbee.Dictionary
 }
 
-func (s *server) GetWords(_ context.Context, in *pb.SpellingbeeRequest) (*pb.SpellingbeeReply, error) {
-	return &pb.SpellingbeeReply{Words: spellingbee.FindWords(s.dict, in.Letters)}, nil
+func (s *server) FindWords(_ context.Context, in *pb.SpellingbeeRequest) (*pb.SpellingbeeReply, error) {
+	soln := spellingbee.FindWords(s.dict, in.Letters)
+	// Sort by longest first.
+	slices.SortFunc(soln, func(a, b string) int {
+		la := len(a)
+		lb := len(b)
+		if la < lb {
+			return 1
+		}
+		if lb < la {
+			return -1
+		}
+		return 0
+	})
+	return &pb.SpellingbeeReply{Words: soln}, nil
 }
 
 func main() {

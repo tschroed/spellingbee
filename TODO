@@ -1,0 +1,13 @@
+- Optmize retrieval: map[key][]string so that words are in equivalence
+  classes by key and we only iterate over keys. There's an even furthe
+  optimization of sorting the keys and then doing a binary search for
+  the start of the key space. (Only words with a key <= search key are
+  candidates.)
+
+- Bazel BUILD
+
+- K8s pod spec
+
+- Publish to a container registry
+
+- Telemetry

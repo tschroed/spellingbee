@@ -12,6 +12,6 @@ WORKDIR /app
 ADD https://raw.githubusercontent.com/dwyl/english-words/master/words.txt words.txt
 COPY . .
 # Examples of both shell mode and exec mode invocations.
-RUN go build -o spellingbee_server server/server.go
-CMD ["./spellingbee_server", "words.txt"]
+RUN go build spellingbee.go
+CMD ["./spellingbee", "words.txt", "ajvelin"]
 EXPOSE 3000

@@ -58,7 +58,6 @@ type server struct {
 
 func (s *server) FindWords(_ context.Context, in *pb.SpellingbeeRequest) (*pb.SpellingbeeReply, error) {
 	soln := spellingbee.FindWords(s.dict, in.Letters)
-	// Sort by longest first.
 	sortFn := func(reta, retb int) func(string, string) int {
 		return func(a, b string) int {
 			la := len(a)

@@ -6,8 +6,12 @@
   May not be worth it because the bazel dependencies themselves are a PITA
   to manage.
 
-- K8s pod spec
+x Publish to a container registry
+  Followed along at
+  https://docs.docker.com/get-started/workshop/02_our_app/
+  https://docs.docker.com/guides/deployment-orchestration/kube-deploy/
+  https://kubernetes.io/docs/tutorials/kubernetes-basics/update/update-intro/
 
-- Publish to a container registry
+x K8s pod spec
 
 - Telemetry

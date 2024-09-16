@@ -1,7 +1,5 @@
 package spellingbee
 
-// TODO: write some tests!
-
 import (
 	"log"
 	"strings"
@@ -77,30 +75,42 @@ func keyContains(haystack, needle key) bool {
 	return (haystack & needle) == needle
 }
 
-type wordskeys map[string]key
+// If the keys are sparse this is memory-inefficience because there are a
+// lot of []strings but searching is generally faster and multiple hits can
+// be found simultaneously. For example, [moisturize moisturizer
+// moisturizers moisturizes] are a single equivalence class. In practice it
+// has resulted in a 25% to 50% speed-up in searches.
+type keyswords map[key][]string
 type Dictionary struct {
-	wk wordskeys
+	kw keyswords
 }
 
 func NewDictionary(words []string) *Dictionary {
-	wk := make(map[string]key, 0)
+	kw := make(map[key][]string, 0)
 	for _, word := range words {
 		k := keyOf(word)
 		if k == 0 {
 			continue
 		}
-		wk[word] = k
+		arr, ok := kw[k]
+		if !ok {
+			arr = make([]string, 0)
+		}
+		arr = append(arr, word)
+		kw[k] = arr
 	}
-	return &Dictionary{wk: wk}
+	debug(kw)
+	debug(len(kw))
+	return &Dictionary{kw: kw}
 }
 
 func (d *Dictionary) FindWords(letters string) []string {
 	lk := keyOf(letters)
 	rk := keyOf(string(letters[0])) // Must be in every returned word.
 	soln := make([]string, 0)
-	for w, wk := range d.wk {
-		if keyContains(wk, rk) && keyContains(lk, wk) {
-			soln = append(soln, w)
+	for kw, w := range d.kw {
+		if keyContains(kw, rk) && keyContains(lk, kw) {
+			soln = append(soln, w...)
 		}
 	}
 	return soln

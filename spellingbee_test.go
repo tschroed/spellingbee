@@ -14,23 +14,23 @@ func TestNewDictionary(t *testing.T) {
 	cases := []struct{
 		name string
 		words []string
-		want wordskeys
+		want keyswords
 	}{
 		{
 			name: "unique keys",
 			words: []string{"foo", "bar", "baz"},
-			want: wordskeys{"bar": 131075, "baz": 33554435, "foo": 16416},
+			want: keyswords{131075: {"bar"}, 33554435: {"baz"}, 16416: {"foo"}},
 		},
 		{
 			name: "equivalent keys",
 			words: []string{"foobara", "foobar", "foobaroo"},
-			want: wordskeys{"foobara": 147491, "foobar": 147491, "foobaroo":   147491},
+			want: keyswords{147491: {"foobara", "foobar", "foobaroo"}},
 		},
 	}
 
 	for _, tc := range cases {
 		got := NewDictionary(tc.words)
-		if diff := cmp.Diff(tc.want, got.wk); diff != "" {
+		if diff := cmp.Diff(tc.want, got.kw); diff != "" {
 			t.Errorf("%s: NewDictionary(%v) mismatch (-want +got):\n%s", tc.name, tc.words, diff)
 		}
 	}

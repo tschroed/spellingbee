@@ -12,6 +12,9 @@ require (
 )
 
 require (
+	github.com/go-chi/chi/v5 v5.0.7 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/rantav/go-grpc-channelz v0.0.4 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.16.0 // indirect

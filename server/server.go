@@ -8,13 +8,17 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"slices"
 	"strings"
 	"time"
 
 	"google.golang.org/grpc"
+	channelzsvc "google.golang.org/grpc/channelz/service"
 	"google.golang.org/grpc/reflection"
+	"github.com/rantav/go-grpc-channelz"
+
 
 	"github.com/tschroed/spellingbee"
 	pb "github.com/tschroed/spellingbee/server/proto"
@@ -24,7 +28,10 @@ const (
 	DEBUG = false
 )
 
-var pFlag = flag.Int("p", 3000, "Port to listen on")
+var (
+	pFlag = flag.Int("p", 3000, "gRPC port")
+	aFlag = flag.Int("a", 3001, "Admin port")
+)
 
 func debug(v any) {
 	if DEBUG {
@@ -90,7 +97,17 @@ func main() {
 	s := grpc.NewServer()
 	pb.RegisterSpellingbeeServer(s, &server{dict: dict})
 	reflection.Register(s)
+	channelzsvc.RegisterChannelzServiceToServer(s)
 	a := lis.Addr()
+
+	// Setup a channelz ui at /debug/channelz/ listening on port aFlag.
+	http.Handle("/", channelz.CreateHandler("/debug", a.String()))
+	alis, err := net.Listen("tcp", fmt.Sprintf(":%d", *aFlag))
+	if err != nil {
+		    log.Fatal(err)
+	}
+	go http.Serve(alis, nil)
+
 	mt, err := mtime(os.Args[0])
 	if err != nil {
 		log.Printf("unable to get mtime of %s: %v", os.Args[0], err)

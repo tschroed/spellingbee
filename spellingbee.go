@@ -75,6 +75,38 @@ func keyContains(haystack, needle key) bool {
 	return (haystack & needle) == needle
 }
 
+// Get a comparison function suitable for SortFunc based on pangrams and length.
+func CmpFn(letters string, reverse bool) func(a, b string) int {
+	kl := keyOf(letters)
+	reta := -1
+	retb := 1
+	if reverse {
+		reta, retb = retb, reta
+	}
+	return func(a, b string) int {
+		ka := keyOf(a)
+		la := len(a)
+		kb := keyOf(b)
+		lb := len(b)
+
+		// If only one is a pangram, put it at the end
+		if ka == kl && kb != kl {
+			return retb
+		}
+		if kb == kl && ka != kl {
+			return reta
+		}
+		// Otherwise, neither or both are pangrams so sort based on length.
+		if la < lb {
+			return reta
+		}
+		if la > lb {
+			return retb
+		}
+		return 0
+	}
+}
+
 // If the keys are sparse this is memory-inefficience because there are a
 // lot of []strings but searching is generally faster and multiple hits can
 // be found simultaneously. For example, [moisturize moisturizer

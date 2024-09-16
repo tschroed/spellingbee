@@ -11,20 +11,20 @@ import (
  * coverage should be 100%. */
 
 func TestNewDictionary(t *testing.T) {
-	cases := []struct{
-		name string
+	cases := []struct {
+		name  string
 		words []string
-		want keyswords
+		want  keyswords
 	}{
 		{
-			name: "unique keys",
+			name:  "unique keys",
 			words: []string{"foo", "bar", "baz"},
-			want: keyswords{131075: {"bar"}, 33554435: {"baz"}, 16416: {"foo"}},
+			want:  keyswords{131075: {"bar"}, 33554435: {"baz"}, 16416: {"foo"}},
 		},
 		{
-			name: "equivalent keys",
+			name:  "equivalent keys",
 			words: []string{"foobara", "foobar", "foobaroo"},
-			want: keyswords{147491: {"foobara", "foobar", "foobaroo"}},
+			want:  keyswords{147491: {"foobara", "foobar", "foobaroo"}},
 		},
 	}
 
@@ -49,34 +49,98 @@ func TestFindWords(t *testing.T) {
 	}
 }
 
+func TestCmpFn(t *testing.T) {
+	cases := []struct {
+		name   string
+		first  string
+		second string
+		equiv  bool
+	}{
+		{
+			name:   "equivalents",
+			first:  "lime",
+			second: "lime",
+			equiv:  true,
+		},
+		{
+			name:   "length",
+			first:  "lime",
+			second: "mingling",
+		},
+		{
+			name:   "pangram",
+			first:  "lime",
+			second: "melding",
+		},
+		{
+			name:   "pangram trumps longer",
+			first:  "mingling",
+			second: "melding",
+		},
+		{
+			name:   "dual-pangram same length",
+			first:  "melding",
+			second: "mingled",
+			equiv:  true,
+		},
+		{
+			name:   "dual-pangram uses length",
+			first:  "melding",
+			second: "meddling",
+		},
+	}
+	letters := "mdegiln"
+	cmp := CmpFn(letters, false)
+	cmpr := CmpFn(letters, true)
+	for _, tc := range cases {
+		v := cmp(tc.first, tc.second)
+		vr := cmpr(tc.first, tc.second)
+		if tc.equiv {
+			if v != 0 {
+				t.Errorf("%s: cmp(\"%s\", \"%s\") want 0 got %d", tc.name, tc.first, tc.second, v)
+			}
+			if vr != 0 {
+				t.Errorf("%s: cmpr(\"%s\", \"%s\") want 0 got %d", tc.name, tc.first, tc.second, vr)
+			}
+			continue
+		}
+		if v != -1 {
+			t.Errorf("%s: cmp(\"%s\", \"%s\") want -1 got %d", tc.name, tc.first, tc.second, v)
+		}
+		if vr != 1 {
+			t.Errorf("%s: cmpr(\"%s\", \"%s\") want 1 got %d", tc.name, tc.first, tc.second, vr)
+		}
+	}
+}
+
 /* Tests of internal implementations. Not a stable part of the API but can
  * be useful to test anyhow in order to assure that components of the
  * implementation are working as expected. */
 
- func TestKeyOf(t *testing.T) {
-	 k1 := keyOf("foo")
-	 k2 := keyOf("bar")
-	 if k1 == k2 {
-		 t.Errorf("keyOf(\"foo\") == keyOf(\"bar\")?")
-	 }
-	 k2 = keyOf("ofo")
-	 if k1 != k2 {
-		 t.Errorf("keyOf(\"foo\") == keyOf(\"ofo\")?")
-	 }
- }
+func TestKeyOf(t *testing.T) {
+	k1 := keyOf("foo")
+	k2 := keyOf("bar")
+	if k1 == k2 {
+		t.Errorf("keyOf(\"foo\") == keyOf(\"bar\")?")
+	}
+	k2 = keyOf("ofo")
+	if k1 != k2 {
+		t.Errorf("keyOf(\"foo\") == keyOf(\"ofo\")?")
+	}
+}
 
- func TestKeyContains(t *testing.T) {
-	 k1 := keyOf("foobar")
-	 k2 := keyOf("foo")
-	 if !keyContains(k1, k2) {
-		 t.Errorf("[true1]: keyContains(%v, %v) == false", k1, k2)
-	 }
-	 k2 = keyOf("bar")
-	 if !keyContains(k1, k2) {
-		 t.Errorf("[true2]: keyContains(%v, %v) == false", k1, k2)
-	 }
-	 k2 = keyOf("baz")
-	 if keyContains(k1, k2) {
-		 t.Errorf("[false]: keyContains(%v, %v) == true", k1, k2)
-	 }
- }
+func TestKeyContains(t *testing.T) {
+	k1 := keyOf("foobar")
+	k2 := keyOf("foo")
+	if !keyContains(k1, k2) {
+		t.Errorf("[true1]: keyContains(%v, %v) == false", k1, k2)
+	}
+	k2 = keyOf("bar")
+	if !keyContains(k1, k2) {
+		t.Errorf("[true2]: keyContains(%v, %v) == false", k1, k2)
+	}
+	k2 = keyOf("baz")
+	if keyContains(k1, k2) {
+		t.Errorf("[false]: keyContains(%v, %v) == true", k1, k2)
+	}
+}

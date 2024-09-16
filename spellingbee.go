@@ -67,7 +67,6 @@ func keyOf(s string) key {
 }
 
 // If haystack key contains the needle key, return true.
-// The first letter of haystack is the central letter and must be present.
 func keyContains(haystack, needle key) bool {
 	if haystack == 0 || needle == 0 {
 		return false

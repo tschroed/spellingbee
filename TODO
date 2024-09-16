@@ -1,7 +1,10 @@
 - Tests for server. See
   https://medium.com/@3n0ugh/how-to-test-grpc-servers-in-go-ba90fe365a18
 
-- Bazel BUILD
+- Bazel BUILD. See
+  https://www.tweag.io/blog/2021-09-08-rules_go-gazelle/
+  May not be worth it because the bazel dependencies themselves are a PITA
+  to manage.
 
 - K8s pod spec
 

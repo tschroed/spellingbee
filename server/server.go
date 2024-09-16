@@ -11,6 +11,7 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -80,6 +81,14 @@ func (s *server) FindWords(_ context.Context, in *pb.SpellingbeeRequest) (*pb.Sp
 	return &pb.SpellingbeeReply{Words: soln}, nil
 }
 
+func mtime(fname string) (time.Time, error) {
+	st, err := os.Stat(fname)
+	if err != nil {
+		return time.Unix(0, 0), err
+	}
+	return st.ModTime(), nil
+}
+
 func main() {
 	flag.Parse()
 	args := flag.Args()
@@ -100,7 +109,11 @@ func main() {
 	pb.RegisterSpellingbeeServer(s, &server{dict: dict})
 	reflection.Register(s)
 	a := lis.Addr()
-	log.Printf("Server listening at %v", a)
+	mt, err := mtime(os.Args[0])
+	if err != nil {
+		log.Printf("unable to get mtime of %s: %v", os.Args[0], err)
+	}
+	log.Printf("Server (mtime %v) listening at %v", mt, a)
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

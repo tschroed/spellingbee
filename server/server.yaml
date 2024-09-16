@@ -1,0 +1,35 @@
+# Following https://docs.docker.com/get-started/workshop/04_sharing_app/
+# After docker push zweknu/spellingbee, apply this
+# Then kubectl port-forward --address=0.0.0.0 svc/spellingbee-entrypoint 3000:3000
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: spellingbee-grpc
+   namespace: default
+spec:
+   replicas: 1
+   selector:
+      matchLabels:
+         spellingbee: web
+   template:
+      metadata:
+         labels:
+            spellingbee: web
+      spec:
+         containers:
+            - name: spellingbee-server
+              image: zweknu/spellingbee
+---
+apiVersion: v1
+kind: Service
+metadata:
+   name: spellingbee-entrypoint
+   namespace: default
+spec:
+   type: NodePort
+   selector:
+      spellingbee: web
+   ports:
+      - port: 3000
+        targetPort: 3000
+        nodePort: 30001

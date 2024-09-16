@@ -14,4 +14,10 @@ x Publish to a container registry
 
 x K8s pod spec
 
+- Write docs:
+  - Updating generated code
+  - Building new image
+  - Pushing new image to docker (incl. new tags)
+  - Updating K8s deployments
+
 - Telemetry

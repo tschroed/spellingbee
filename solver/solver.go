@@ -52,8 +52,8 @@ func main() {
 		os.Exit(1)
 	}
 	// debug(charBits)
-	wordsKeys := spellingbee.BuildDictionary(words)
-	debug(wordsKeys)
-	soln := spellingbee.FindWords(wordsKeys, os.Args[2])
+	dict := spellingbee.NewDictionary(words)
+	debug(dict)
+	soln := dict.FindWords(os.Args[2])
 	fmt.Println(soln)
 }

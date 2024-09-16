@@ -3,7 +3,7 @@ package spellingbee
 // TODO: write some tests!
 
 import (
-	"fmt"
+	"log"
 	"strings"
 
 	"golang.org/x/exp/slices"
@@ -45,12 +45,11 @@ var charBits = map[string]uint32{
 
 func debug(v any) {
 	if DEBUG {
-		fmt.Println(v)
+		log.Println(v)
 	}
 }
 
 type key uint32
-type Dictionary map[string]key
 
 func keyOf(s string) key {
 	debug(s)
@@ -69,18 +68,6 @@ func keyOf(s string) key {
 	return key(k)
 }
 
-func BuildDictionary(words []string) Dictionary {
-	wk := make(Dictionary, 0)
-	for _, word := range words {
-		k := keyOf(word)
-		if k == 0 {
-			continue
-		}
-		wk[word] = k
-	}
-	return wk
-}
-
 // If haystack key contains the needle key, return true.
 // The first letter of haystack is the central letter and must be present.
 func keyContains(haystack, needle key) bool {
@@ -90,11 +77,29 @@ func keyContains(haystack, needle key) bool {
 	return (haystack & needle) == needle
 }
 
-func FindWords(wordsKeys Dictionary, letters string) []string {
+type wordskeys map[string]key
+type Dictionary struct {
+	wk wordskeys
+}
+
+func NewDictionary(words []string) *Dictionary {
+	wk := make(map[string]key, 0)
+	for _, word := range words {
+		k := keyOf(word)
+		if k == 0 {
+			continue
+		}
+		wk[word] = k
+	}
+	return &Dictionary{wk: wk}
+}
+
+func (d *Dictionary) FindWords(letters string) []string {
 	lk := keyOf(letters)
+	rk := keyOf(string(letters[0])) // Must be in every returned word.
 	soln := make([]string, 0)
-	for w, wk := range wordsKeys {
-		if w[0] == letters[0] && keyContains(lk, wk) {
+	for w, wk := range d.wk {
+		if keyContains(wk, rk) && keyContains(lk, wk) {
 			soln = append(soln, w)
 		}
 	}

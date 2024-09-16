@@ -53,11 +53,11 @@ func usage() {
 
 type server struct {
 	pb.UnimplementedSpellingbeeServer
-	dict spellingbee.Dictionary
+	dict *spellingbee.Dictionary
 }
 
 func (s *server) FindWords(_ context.Context, in *pb.SpellingbeeRequest) (*pb.SpellingbeeReply, error) {
-	soln := spellingbee.FindWords(s.dict, in.Letters)
+	soln := s.dict.FindWords(in.Letters)
 	sortFn := func(reverse bool) func(string, string) int {
 		reta := 1
 		retb := -1
@@ -90,14 +90,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
-	d := spellingbee.BuildDictionary(words)
-	debug(d)
+	dict := spellingbee.NewDictionary(words)
+	debug(dict)
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *pFlag))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterSpellingbeeServer(s, &server{dict: d})
+	pb.RegisterSpellingbeeServer(s, &server{dict: dict})
 	reflection.Register(s)
 	a := lis.Addr()
 	log.Printf("Server listening at %v", a)

@@ -136,6 +136,9 @@ func NewDictionary(words []string) *Dictionary {
 }
 
 func (d *Dictionary) FindWords(letters string) []string {
+	if len(letters) < 1 {
+		return []string{}
+	}
 	lk := keyOf(letters)
 	rk := keyOf(string(letters[0])) // Must be in every returned word.
 	soln := make([]string, 0)

@@ -36,7 +36,7 @@ func TestNewDictionary(t *testing.T) {
 	}
 }
 
-func TestFindWords(t *testing.T) {
+func TestFindWordsNonEmpty(t *testing.T) {
 	letters := "alphynx"
 	// Note that "ply" does not contain the mandatory "a".
 	words := []string{"alpha", "beta", "gamma", "ply", "phalanx", "philistine", "alfalfa", "pharynx"}
@@ -44,6 +44,16 @@ func TestFindWords(t *testing.T) {
 	got := d.FindWords(letters)
 	want := []string{"alpha", "phalanx"}
 	slices.Sort(got)
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("FindWords() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestFindWordsEmpty(t *testing.T) {
+	words := []string{"alpha", "beta", "gamma", "ply", "phalanx", "philistine", "alfalfa", "pharynx"}
+	d := NewDictionary(words)
+	got := d.FindWords("")
+	want := []string{}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("FindWords() mismatch (-want +got):\n%s", diff)
 	}

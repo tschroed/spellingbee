@@ -21,3 +21,4 @@ x K8s pod spec
   - Updating K8s deployments
 
 - Telemetry
+  https://pkg.go.dev/google.golang.org/grpc/stats/opentelemetry

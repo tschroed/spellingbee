@@ -98,6 +98,11 @@ func TestCmpFn(t *testing.T) {
 			first:  "melding",
 			second: "meddling",
 		},
+		{
+			name:   "higher score can trump pangram",
+			first:  "melding",
+			second: "limelimelimelime",
+		},
 	}
 	letters := "mdegiln"
 	cmp := CmpFn(letters, false)

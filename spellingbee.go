@@ -88,14 +88,13 @@ func CmpFn(letters string, reverse bool) func(a, b string) int {
 		kb := keyOf(b)
 		lb := len(b)
 
-		// If only one is a pangram, put it at the end
-		if ka == kl && kb != kl {
-			return retb
+		// Pangrams are worth an extra 7 points.
+		if ka == kl {
+			la += 7
 		}
-		if kb == kl && ka != kl {
-			return reta
+		if kb == kl {
+			lb += 7
 		}
-		// Otherwise, neither or both are pangrams so sort based on length.
 		if la < lb {
 			return reta
 		}

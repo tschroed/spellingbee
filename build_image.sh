@@ -9,7 +9,7 @@ if [ "$#" != 1 ]; then
 fi
 TAG=$1
 
-echo "Building $IMAGE:TAG..."
+echo "Building $IMAGE:$TAG..."
 go test
 docker build -t $IMAGE:$TAG .
 echo "Pushing..."

@@ -11,6 +11,7 @@ FROM golang:1.23
 WORKDIR /app
 ADD https://raw.githubusercontent.com/dwyl/english-words/master/words.txt words.txt
 COPY . .
+COPY server/page_html.tmpl .
 # Examples of both shell mode and exec mode invocations.
 RUN go build -o spellingbee_server server/server.go
 CMD ["./spellingbee_server", "words.txt"]

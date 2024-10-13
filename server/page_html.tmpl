@@ -1,0 +1,16 @@
+<HTML>
+<TITLE>Awesome HTML 1.0 Spelling Bee Solver</TITLE>
+<BODY>
+<FORM action="/">
+  <LABEL for="letters">Letters:</label>
+  <INPUT TYPE="text" id="letters" name="letters" value="{{.Letters}}"/>
+  <LABEL for="reverse">Reverse:</label>
+  <INPUT TYPE="checkbox" id="reverse" name="reverse" value="true" {{if .Reverse}}checked{{end}}/>
+  <INPUT TYPE="submit"/>
+</FORM>
+Solutions:<br/>
+{{range .Soln}}
+  {{.}}<br/>
+{{end}}
+</BODY>
+</HTML>

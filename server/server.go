@@ -5,12 +5,14 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -30,7 +32,8 @@ const (
 
 var (
 	pFlag = flag.Int("p", 3000, "gRPC port")
-	aFlag = flag.Int("a", 3001, "Admin port")
+	wFlag = flag.Int("w", 3001, "Web server port")
+	tFlag = flag.String("t", "page_html.tmpl", "Page template")
 )
 
 func debug(v any) {
@@ -53,6 +56,14 @@ func readWords(fname string) ([]string, error) {
 	slices.Sort(words)
 	words = slices.Compact(words)
 	return words, nil
+}
+
+func readTemplate(fname string) (string, error) {
+	b, err := os.ReadFile(fname)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
 func usage() {
@@ -78,6 +89,35 @@ func mtime(fname string) (time.Time, error) {
 	return st.ModTime(), nil
 }
 
+type webApp struct { 
+	tmpl *template.Template
+	dict *spellingbee.Dictionary
+}
+
+func (a *webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Letters string
+		Reverse bool
+		Soln []string
+	}
+	data.Letters = r.FormValue("letters")
+	if v := r.FormValue("reverse"); v != "" {
+		if b, err := strconv.ParseBool(v); err != nil {
+			log.Println(err)
+		} else {
+			data.Reverse = b
+		}
+	}
+	if data.Letters != "" {
+		soln := a.dict.FindWords(data.Letters)
+		slices.SortFunc(soln, spellingbee.CmpFn(data.Letters, data.Reverse))
+		data.Soln = soln
+	}
+	if a.tmpl != nil {
+		a.tmpl.Execute(w, data)
+	}
+}
+
 func main() {
 	flag.Parse()
 	args := flag.Args()
@@ -98,15 +138,31 @@ func main() {
 	pb.RegisterSpellingbeeServer(s, &server{dict: dict})
 	reflection.Register(s)
 	channelzsvc.RegisterChannelzServiceToServer(s)
-	a := lis.Addr()
 
-	// Setup a channelz ui at /debug/channelz/ listening on port aFlag.
-	http.Handle("/", channelz.CreateHandler("/debug", a.String()))
-	alis, err := net.Listen("tcp", fmt.Sprintf(":%d", *aFlag))
+	// Set up web app
+	var tmpl *template.Template
+	if t, err := readTemplate(*tFlag); err != nil {
+		log.Println(err)
+	} else {
+		log.Println("Parsing template...")
+		tmpl, err = template.New("page").Parse(t)
+		if err != nil {
+			panic(err)
+		}
+	}
+	http.Handle("/",  &webApp{tmpl: tmpl, dict: dict})
 	if err != nil {
 		    log.Fatal(err)
 	}
-	go http.Serve(alis, nil)
+	// Set up a channelz ui at /debug/channelz/
+	a := lis.Addr()
+	http.Handle("/debug/", channelz.CreateHandler("/debug", a.String()))
+	// Listen on wFlag
+	wlis, err := net.Listen("tcp", fmt.Sprintf(":%d", *wFlag))
+	if err != nil {
+		    log.Fatal(err)
+	}
+	go http.Serve(wlis, nil)
 
 	mt, err := mtime(os.Args[0])
 	if err != nil {

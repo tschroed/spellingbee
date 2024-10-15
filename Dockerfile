@@ -9,7 +9,8 @@
 # FROM node:18-alpine
 FROM golang:1.23
 WORKDIR /app
-ADD https://raw.githubusercontent.com/dwyl/english-words/master/words.txt words.txt
+# ADD https://raw.githubusercontent.com/dwyl/english-words/master/words.txt words.txt
+ADD https://www.mit.edu/~ecprice/wordlist.10000 words.txt
 COPY . .
 COPY server/page_html.tmpl .
 # Examples of both shell mode and exec mode invocations.

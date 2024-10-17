@@ -1,5 +1,6 @@
 #!/bin/sh
 
+export DOCKER_BUILDKIT=1
 set -e
 
 IMAGE="zweknu/spellingbee"
@@ -11,8 +12,8 @@ TAG=$1
 
 echo "Building $IMAGE:$TAG..."
 go test
-docker build -t $IMAGE:$TAG .
-echo "Pushing..."
-docker push $IMAGE:$TAG
+docker buildx build --push -t $IMAGE:$TAG .
+## echo "Pushing..."
+## docker push $IMAGE:$TAG
 # kubectl set image deployments/spellingbee-grpc spellingbee-server=docker.io/$IMAGE:$TAG
 echo "Done."

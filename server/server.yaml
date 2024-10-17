@@ -16,6 +16,10 @@ spec:
          labels:
             spellingbee: web
       spec:
+         securityContext:
+            # nobody:nogroup
+            runAsUser: 65534
+            runAsGroup: 65534
          containers:
             - name: spellingbee-server
               image: docker.io/zweknu/spellingbee

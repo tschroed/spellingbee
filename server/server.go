@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"html/template"
@@ -17,6 +18,10 @@ import (
 	"time"
 
 	channelz "github.com/rantav/go-grpc-channelz"
+	"go.opentelemetry.io/contrib/bridges/otelslog"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 	"google.golang.org/grpc"
 	channelzsvc "google.golang.org/grpc/channelz/service"
 	"google.golang.org/grpc/reflection"
@@ -26,13 +31,17 @@ import (
 )
 
 const (
-	DEBUG = false
+	DEBUG  = false
+	otRoot = "zweknu.org/spellingbee"
 )
 
 var (
-	pFlag = flag.Int("p", 3000, "gRPC port")
-	wFlag = flag.Int("w", 3001, "Web server port")
-	tFlag = flag.String("t", "page_html.tmpl", "Page template")
+	pFlag    = flag.Int("p", 3000, "gRPC port")
+	wFlag    = flag.Int("w", 3001, "Web server port")
+	tFlag    = flag.String("t", "page_html.tmpl", "Page template")
+	meter    = otel.Meter(otRoot)
+	logger   = otelslog.NewLogger(otRoot)
+	solveCnt metric.Int64Counter
 )
 
 func debug(v any) {
@@ -74,7 +83,9 @@ type server struct {
 	dict *spellingbee.Dictionary
 }
 
-func (s *server) FindWords(_ context.Context, in *pb.SpellingbeeRequest) (*pb.SpellingbeeReply, error) {
+func (s *server) FindWords(ctx context.Context, in *pb.SpellingbeeRequest) (*pb.SpellingbeeReply, error) {
+	solveValueAttr := attribute.String("solve.mode", "grpc")
+	solveCnt.Add(ctx, 1, metric.WithAttributes(solveValueAttr))
 	soln := s.dict.FindWords(in.Letters)
 	slices.SortFunc(soln, spellingbee.CmpFn(in.Letters, in.Reverse))
 	return &pb.SpellingbeeReply{Words: soln}, nil
@@ -108,6 +119,8 @@ func (a *webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if data.Letters != "" {
+		solveValueAttr := attribute.String("solve.mode", "web")
+		solveCnt.Add(r.Context(), 1, metric.WithAttributes(solveValueAttr))
 		soln := a.dict.FindWords(data.Letters)
 		slices.SortFunc(soln, spellingbee.CmpFn(data.Letters, data.Reverse))
 		data.Soln = soln
@@ -117,12 +130,42 @@ func (a *webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func init() {
+	var err error
+	solveCnt, err = meter.Int64Counter("spellingbee.solves",
+		metric.WithDescription("Number of calls to solve a puzzle"),
+		metric.WithUnit("{solve}"))
+	if err != nil {
+		panic(err)
+	}
+}
+
 func main() {
+	// Handle SIGINT (CTRL+C) gracefully.
+	/* TODO(trevors): Figure out why ^C doesn't seem to be invoking signal
+	* handling as expected.
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+		defer func() {
+			log.Printf("Interrupt received, quitting...")
+			stop()
+			os.Exit(0)
+		}()
+	*/
+	ctx := context.Background()
+
 	flag.Parse()
 	args := flag.Args()
 	if len(args) != 1 {
 		usage()
 	}
+	otelShutdown, err := setupOTelSDK(ctx)
+	if err != nil {
+		return
+	}
+	// Handle shutdown properly so nothing leaks.
+	defer func() {
+		err = errors.Join(err, otelShutdown(context.Background()))
+	}()
 	words, err := readWords(args[0])
 	if err != nil {
 		log.Fatalf("%v", err)

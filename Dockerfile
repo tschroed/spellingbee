@@ -15,6 +15,6 @@ ADD --chmod=0444 https://websites.umich.edu/~jlawler/wordlist words.txt
 COPY . .
 COPY --chmod=0444 server/page_html.tmpl .
 # Examples of both shell mode and exec mode invocations.
-RUN go build -o spellingbee_server server/server.go
+RUN go build -o spellingbee_server server/*.go
 CMD ["./spellingbee_server", "words.txt"]
 EXPOSE 3000

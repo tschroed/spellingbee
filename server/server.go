@@ -16,11 +16,10 @@ import (
 	"strings"
 	"time"
 
+	channelz "github.com/rantav/go-grpc-channelz"
 	"google.golang.org/grpc"
 	channelzsvc "google.golang.org/grpc/channelz/service"
 	"google.golang.org/grpc/reflection"
-	"github.com/rantav/go-grpc-channelz"
-
 
 	"github.com/tschroed/spellingbee"
 	pb "github.com/tschroed/spellingbee/server/proto"
@@ -89,7 +88,7 @@ func mtime(fname string) (time.Time, error) {
 	return st.ModTime(), nil
 }
 
-type webApp struct { 
+type webApp struct {
 	tmpl *template.Template
 	dict *spellingbee.Dictionary
 }
@@ -98,7 +97,7 @@ func (a *webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var data struct {
 		Letters string
 		Reverse bool
-		Soln []string
+		Soln    []string
 	}
 	data.Letters = r.FormValue("letters")
 	if v := r.FormValue("reverse"); v != "" {
@@ -150,9 +149,9 @@ func main() {
 			panic(err)
 		}
 	}
-	http.Handle("/",  &webApp{tmpl: tmpl, dict: dict})
+	http.Handle("/", &webApp{tmpl: tmpl, dict: dict})
 	if err != nil {
-		    log.Fatal(err)
+		log.Fatal(err)
 	}
 	// Set up a channelz ui at /debug/channelz/
 	a := lis.Addr()
@@ -160,7 +159,7 @@ func main() {
 	// Listen on wFlag
 	wlis, err := net.Listen("tcp", fmt.Sprintf(":%d", *wFlag))
 	if err != nil {
-		    log.Fatal(err)
+		log.Fatal(err)
 	}
 	go http.Serve(wlis, nil)
 

@@ -51,7 +51,7 @@ func readWords(fname string) ([]string, error) {
 	r := bufio.NewReader(f)
 	words := make([]string, 0)
 	for l, _, err := r.ReadLine(); err != io.EOF; l, _, err = r.ReadLine() {
-		words = append(words, strings.ToLower(string(l)))
+		words = append(words, strings.ToLower(strings.TrimSpace(string(l))))
 	}
 	slices.Sort(words)
 	words = slices.Compact(words)

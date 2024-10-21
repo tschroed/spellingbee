@@ -140,6 +140,37 @@ func init() {
 	}
 }
 
+type dictStats struct {
+	size    metric.Int64Gauge
+	solnCnt metric.Int64Counter
+}
+
+func (s *dictStats) RecordSize(ctx context.Context, size int) {
+	s.size.Record(ctx, int64(size))
+}
+func (s *dictStats) RecordSolutions(ctx context.Context, soln []string) {
+	solnLenAttr := attribute.Int("solution.len", len(soln))
+	s.solnCnt.Add(ctx, 1, metric.WithAttributes(solnLenAttr))
+}
+func newDictStats() *dictStats {
+	size, err := meter.Int64Gauge("spellingbee.dict_size",
+		metric.WithDescription("Size of spellingbee dictionary"))
+	if err != nil {
+		panic(err)
+	}
+	solnCnt, err := meter.Int64Counter("spellingbee.solutions",
+		metric.WithDescription("Number of solutions by solution set size"),
+		metric.WithUnit("{solution}"))
+	if err != nil {
+		panic(err)
+	}
+	return &dictStats{
+		size:    size,
+		solnCnt: solnCnt,
+	}
+
+}
+
 func main() {
 	// Handle SIGINT (CTRL+C) gracefully.
 	/* TODO(trevors): Figure out why ^C doesn't seem to be invoking signal
@@ -170,7 +201,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
-	dict := spellingbee.NewDictionary(words)
+	dict := spellingbee.NewDictionary(words, newDictStats())
 	debug(dict)
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *pFlag))
 	if err != nil {

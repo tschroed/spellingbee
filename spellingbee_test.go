@@ -1,11 +1,27 @@
 package spellingbee
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"golang.org/x/exp/slices"
 )
+
+type testStats struct {
+	Size      int
+	Solutions map[int]int
+}
+
+func (s *testStats) RecordSize(_ context.Context, size int) {
+	s.Size = size
+}
+func (s *testStats) RecordSolutions(_ context.Context, soln []string) {
+	s.Solutions[len(soln)] += 1
+}
+func newTestStats() *testStats {
+	return &testStats{Solutions: make(map[int]int, 0)}
+}
 
 /* Tests of the exported API. These should be relatively stable. API
  * coverage should be 100%. */
@@ -29,7 +45,7 @@ func TestNewDictionary(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		got := NewDictionary(tc.words)
+		got := NewDictionary(tc.words, nil)
 		if diff := cmp.Diff(tc.want, got.kw); diff != "" {
 			t.Errorf("%s: NewDictionary(%v) mismatch (-want +got):\n%s", tc.name, tc.words, diff)
 		}
@@ -37,25 +53,82 @@ func TestNewDictionary(t *testing.T) {
 }
 
 func TestFindWordsNonEmpty(t *testing.T) {
-	letters := "alphynx"
 	// Note that "ply" does not contain the mandatory "a".
 	words := []string{"alpha", "beta", "gamma", "ply", "phalanx", "philistine", "alfalfa", "pharynx"}
-	d := NewDictionary(words)
-	got := d.FindWords(letters)
-	want := []string{"alpha", "phalanx"}
-	slices.Sort(got)
-	if diff := cmp.Diff(want, got); diff != "" {
-		t.Errorf("FindWords() mismatch (-want +got):\n%s", diff)
+	d := NewDictionary(words, nil)
+	cases := []struct {
+		letters string
+		want    []string
+	}{
+		{
+			letters: "alphynx",
+			want:    []string{"alpha", "phalanx"},
+		},
+		{
+			letters: "fla",
+			want:    []string{"alfalfa"},
+		},
+	}
+	for i, tc := range cases {
+		got := d.FindWords(tc.letters)
+		slices.Sort(got)
+		if diff := cmp.Diff(tc.want, got); diff != "" {
+			t.Errorf("[%d, %s] FindWords() mismatch (-want +got):\n%s", i, tc.letters, diff)
+		}
 	}
 }
 
 func TestFindWordsEmpty(t *testing.T) {
 	words := []string{"alpha", "beta", "gamma", "ply", "phalanx", "philistine", "alfalfa", "pharynx"}
-	d := NewDictionary(words)
+	d := NewDictionary(words, nil)
 	got := d.FindWords("")
 	want := []string{}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("FindWords() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestStats(t *testing.T) {
+	// Note that "ply" does not contain the mandatory "a".
+	words := []string{"alpha", "beta", "gamma", "ply", "phalanx", "philistine", "alfalfa", "pharynx"}
+	s := newTestStats()
+	d := NewDictionary(words, s)
+	if s.Size != 8 {
+		t.Errorf("Dictionary size misrecorded, want 8 got %v", s.Size)
+	}
+	if len(s.Solutions) != 0 {
+		t.Errorf("Solutions misrecorded, want {} got %v", s.Solutions)
+	}
+	cases := []struct {
+		letters   string
+		wantSoln  []string
+		wantStats map[int]int // Cumulative w/ previous test cases
+	}{
+		{
+			letters:   "alphynx",
+			wantSoln:  []string{"alpha", "phalanx"},
+			wantStats: map[int]int{2: 1},
+		},
+		{
+			letters:   "agfml",
+			wantSoln:  []string{"alfalfa", "gamma"},
+			wantStats: map[int]int{2: 2},
+		},
+		{
+			letters:   "plha",
+			wantSoln:  []string{"alpha"},
+			wantStats: map[int]int{1: 1, 2: 2},
+		},
+	}
+	for i, tc := range cases {
+		got := d.FindWords(tc.letters)
+		slices.Sort(got)
+		if diff := cmp.Diff(tc.wantSoln, got); diff != "" {
+			t.Errorf("[%d: %s] FindWords() mismatch (-want +got):\n%s", i, tc.letters, diff)
+		}
+		if diff := cmp.Diff(s.Solutions, tc.wantStats); diff != "" {
+			t.Errorf("[%d: %s] stats solutions mismatch (-want +got):\n%s", i, tc.letters, diff)
+		}
 	}
 }
 

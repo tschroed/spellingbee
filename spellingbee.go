@@ -1,6 +1,7 @@
 package spellingbee
 
 import (
+	"context"
 	"log"
 	"strings"
 
@@ -111,11 +112,22 @@ func CmpFn(letters string, reverse bool) func(a, b string) int {
 // moisturizers moisturizes] are a single equivalence class. In practice it
 // has resulted in a 25% to 50% speed-up in searches.
 type keyswords map[key][]string
-type Dictionary struct {
-	kw keyswords
+type DictionaryStats interface {
+	RecordSize(context.Context, int)
+	RecordSolutions(context.Context, []string)
 }
+type Dictionary struct {
+	kw    keyswords
+	stats DictionaryStats
+}
+type nullStats struct{}
 
-func NewDictionary(words []string) *Dictionary {
+func (n *nullStats) RecordSize(context.Context, int)           {}
+func (n *nullStats) RecordSolutions(context.Context, []string) {}
+func NewDictionary(words []string, stats DictionaryStats) *Dictionary {
+	if stats == nil {
+		stats = &nullStats{}
+	}
 	kw := make(map[key][]string, 0)
 	for _, word := range words {
 		k := keyOf(word)
@@ -131,7 +143,8 @@ func NewDictionary(words []string) *Dictionary {
 	}
 	debug(kw)
 	debug(len(kw))
-	return &Dictionary{kw: kw}
+	stats.RecordSize(context.Background(), len(kw))
+	return &Dictionary{kw: kw, stats: stats}
 }
 
 func (d *Dictionary) FindWords(letters string) []string {
@@ -146,5 +159,6 @@ func (d *Dictionary) FindWords(letters string) []string {
 			soln = append(soln, w...)
 		}
 	}
+	d.stats.RecordSolutions(context.Background(), soln)
 	return soln
 }

@@ -86,7 +86,7 @@ type server struct {
 func (s *server) FindWords(ctx context.Context, in *pb.SpellingbeeRequest) (*pb.SpellingbeeReply, error) {
 	solveValueAttr := attribute.String("solve.mode", "grpc")
 	solveCnt.Add(ctx, 1, metric.WithAttributes(solveValueAttr))
-	soln := s.dict.FindWords(in.Letters)
+	soln := s.dict.FindWords(ctx, in.Letters)
 	slices.SortFunc(soln, spellingbee.CmpFn(in.Letters, in.Reverse))
 	return &pb.SpellingbeeReply{Words: soln}, nil
 }
@@ -121,7 +121,7 @@ func (a *webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if data.Letters != "" {
 		solveValueAttr := attribute.String("solve.mode", "web")
 		solveCnt.Add(r.Context(), 1, metric.WithAttributes(solveValueAttr))
-		soln := a.dict.FindWords(data.Letters)
+		soln := a.dict.FindWords(r.Context(), data.Letters)
 		slices.SortFunc(soln, spellingbee.CmpFn(data.Letters, data.Reverse))
 		data.Soln = soln
 	}
@@ -201,7 +201,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
-	dict := spellingbee.NewDictionary(words, newDictStats())
+	dict := spellingbee.NewDictionary(ctx, words, newDictStats())
 	debug(dict)
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *pFlag))
 	if err != nil {

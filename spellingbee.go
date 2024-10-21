@@ -124,7 +124,7 @@ type nullStats struct{}
 
 func (n *nullStats) RecordSize(context.Context, int)           {}
 func (n *nullStats) RecordSolutions(context.Context, []string) {}
-func NewDictionary(words []string, stats DictionaryStats) *Dictionary {
+func NewDictionary(ctx context.Context, words []string, stats DictionaryStats) *Dictionary {
 	if stats == nil {
 		stats = &nullStats{}
 	}
@@ -143,11 +143,11 @@ func NewDictionary(words []string, stats DictionaryStats) *Dictionary {
 	}
 	debug(kw)
 	debug(len(kw))
-	stats.RecordSize(context.Background(), len(kw))
+	stats.RecordSize(ctx, len(kw))
 	return &Dictionary{kw: kw, stats: stats}
 }
 
-func (d *Dictionary) FindWords(letters string) []string {
+func (d *Dictionary) FindWords(ctx context.Context, letters string) []string {
 	if len(letters) < 1 {
 		return []string{}
 	}
@@ -159,6 +159,6 @@ func (d *Dictionary) FindWords(letters string) []string {
 			soln = append(soln, w...)
 		}
 	}
-	d.stats.RecordSolutions(context.Background(), soln)
+	d.stats.RecordSolutions(ctx, soln)
 	return soln
 }

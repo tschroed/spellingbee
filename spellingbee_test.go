@@ -45,7 +45,7 @@ func TestNewDictionary(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		got := NewDictionary(tc.words, nil)
+		got := NewDictionary(context.Background(), tc.words, nil)
 		if diff := cmp.Diff(tc.want, got.kw); diff != "" {
 			t.Errorf("%s: NewDictionary(%v) mismatch (-want +got):\n%s", tc.name, tc.words, diff)
 		}
@@ -55,7 +55,7 @@ func TestNewDictionary(t *testing.T) {
 func TestFindWordsNonEmpty(t *testing.T) {
 	// Note that "ply" does not contain the mandatory "a".
 	words := []string{"alpha", "beta", "gamma", "ply", "phalanx", "philistine", "alfalfa", "pharynx"}
-	d := NewDictionary(words, nil)
+	d := NewDictionary(context.Background(), words, nil)
 	cases := []struct {
 		letters string
 		want    []string
@@ -70,7 +70,7 @@ func TestFindWordsNonEmpty(t *testing.T) {
 		},
 	}
 	for i, tc := range cases {
-		got := d.FindWords(tc.letters)
+		got := d.FindWords(context.Background(), tc.letters)
 		slices.Sort(got)
 		if diff := cmp.Diff(tc.want, got); diff != "" {
 			t.Errorf("[%d, %s] FindWords() mismatch (-want +got):\n%s", i, tc.letters, diff)
@@ -80,8 +80,8 @@ func TestFindWordsNonEmpty(t *testing.T) {
 
 func TestFindWordsEmpty(t *testing.T) {
 	words := []string{"alpha", "beta", "gamma", "ply", "phalanx", "philistine", "alfalfa", "pharynx"}
-	d := NewDictionary(words, nil)
-	got := d.FindWords("")
+	d := NewDictionary(context.Background(), words, nil)
+	got := d.FindWords(context.Background(), "")
 	want := []string{}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("FindWords() mismatch (-want +got):\n%s", diff)
@@ -92,7 +92,7 @@ func TestStats(t *testing.T) {
 	// Note that "ply" does not contain the mandatory "a".
 	words := []string{"alpha", "beta", "gamma", "ply", "phalanx", "philistine", "alfalfa", "pharynx"}
 	s := newTestStats()
-	d := NewDictionary(words, s)
+	d := NewDictionary(context.Background(), words, s)
 	if s.Size != 8 {
 		t.Errorf("Dictionary size misrecorded, want 8 got %v", s.Size)
 	}
@@ -121,7 +121,7 @@ func TestStats(t *testing.T) {
 		},
 	}
 	for i, tc := range cases {
-		got := d.FindWords(tc.letters)
+		got := d.FindWords(context.Background(), tc.letters)
 		slices.Sort(got)
 		if diff := cmp.Diff(tc.wantSoln, got); diff != "" {
 			t.Errorf("[%d: %s] FindWords() mismatch (-want +got):\n%s", i, tc.letters, diff)

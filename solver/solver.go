@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -52,8 +53,9 @@ func main() {
 		os.Exit(1)
 	}
 	// debug(charBits)
-	dict := spellingbee.NewDictionary(words)
+	ctx := context.Background()
+	dict := spellingbee.NewDictionary(ctx, words, nil)
 	debug(dict)
-	soln := dict.FindWords(os.Args[2])
+	soln := dict.FindWords(ctx, os.Args[2])
 	fmt.Println(soln)
 }

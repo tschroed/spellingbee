@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "spellingbee.fullname" . }}
+  labels:
+    {{- include "spellingbee.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  {{ if eq .Values.service.type "ExternalName" }}externalName: {{ .Values.service.externalName }}{{end}}
+  ports:
+    {{- range .Values.service.ports }}
+    - port: {{ .port }}
+      targetPort: {{ default "http" .name }}
+      protocol: TCP
+      name: {{ default "http" .name }}
+    {{- end }}
+  selector:
+    {{- include "spellingbee.selectorLabels" . | nindent 4 }}

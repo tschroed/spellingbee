@@ -1,10 +1,8 @@
-# Following https://docs.docker.com/get-started/workshop/04_sharing_app/
-# After docker push zweknu/spellingbee, apply this
-# Then kubectl port-forward --address=0.0.0.0 svc/spellingbee-entrypoint 3000:3000
+# Or use the helm chart in ../helm/spellingbee.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-   name: spellingbee-grpc
+   name: spellingbee
    namespace: default
 spec:
    replicas: 1
@@ -21,7 +19,7 @@ spec:
             runAsUser: 65534
             runAsGroup: 65534
          containers:
-            - name: spellingbee-server
+            - name: spellingbee
               image: docker.io/zweknu/spellingbee
               resources:
                  limits:
@@ -29,13 +27,16 @@ spec:
                     cpu: "1"
 
 ---
+# You'll need Cloud Provider KIND
+# (https://kind.sigs.k8s.io/docs/user/loadbalancer/) if you want a
+# loadbalancer.
 apiVersion: v1
 kind: Service
 metadata:
-   name: spellingbee-entrypoint
+   name: spellingbee
    namespace: default
 spec:
-   type: NodePort
+   type: LoadBalancer
    selector:
       spellingbee: web
    ports:
